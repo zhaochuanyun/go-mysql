@@ -9,9 +9,9 @@ import (
 	"github.com/pingcap/errors"
 	uuid "github.com/satori/go.uuid"
 	"github.com/siddontang/go-log/log"
-	"github.com/siddontang/go-mysql/mysql"
-	"github.com/siddontang/go-mysql/replication"
-	"github.com/siddontang/go-mysql/schema"
+	"github.com/zhaochuanyun/go-mysql/mysql"
+	"github.com/zhaochuanyun/go-mysql/replication"
+	"github.com/zhaochuanyun/go-mysql/schema"
 )
 
 var (

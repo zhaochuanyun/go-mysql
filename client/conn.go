@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/pingcap/errors"
-	. "github.com/siddontang/go-mysql/mysql"
-	"github.com/siddontang/go-mysql/packet"
+	. "github.com/zhaochuanyun/go-mysql/mysql"
+	"github.com/zhaochuanyun/go-mysql/packet"
 )
 
 type Conn struct {
