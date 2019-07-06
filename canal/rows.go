@@ -18,6 +18,7 @@ const (
 type RowsEvent struct {
 	Table  *schema.Table
 	Action string
+	Binlog string
 	// changed row list
 	// binlog has three update event version, v0, v1 and v2.
 	// for v1 and v2, the rows number must be even.
@@ -26,6 +27,20 @@ type RowsEvent struct {
 	Rows [][]interface{}
 	// Header can be used to inspect the event
 	Header *replication.EventHeader
+}
+
+func newRowsBinlogEvent(table *schema.Table, action string, binlog string, rows [][]interface{}, header *replication.EventHeader) *RowsEvent {
+	e := new(RowsEvent)
+
+	e.Table = table
+	e.Action = action
+	e.Binlog = binlog
+	e.Rows = rows
+	e.Header = header
+
+	e.handleUnsigned()
+
+	return e
 }
 
 func newRowsEvent(table *schema.Table, action string, rows [][]interface{}, header *replication.EventHeader) *RowsEvent {

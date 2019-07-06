@@ -191,6 +191,8 @@ func (c *Canal) handleRowsEvent(e *replication.BinlogEvent) error {
 	schema := string(ev.Table.Schema)
 	table := string(ev.Table.Table)
 
+	binlog := string(e.RawData)
+
 	t, err := c.GetTable(schema, table)
 	if err != nil {
 		return err
@@ -206,7 +208,7 @@ func (c *Canal) handleRowsEvent(e *replication.BinlogEvent) error {
 	default:
 		return errors.Errorf("%s not supported now", e.Header.EventType)
 	}
-	events := newRowsEvent(t, action, ev.Rows, e.Header)
+	events := newRowsBinlogEvent(t, action, binlog, ev.Rows, e.Header)
 	return c.eventHandler.OnRow(events)
 }
 

@@ -21,6 +21,8 @@ type ParseHandler interface {
 	BinLog(name string, pos uint64) error
 
 	Data(schema string, table string, values []string) error
+
+	DataBinlog(schema string, table string, binlog string, values []string) error
 }
 
 var binlogExp *regexp.Regexp
@@ -82,7 +84,7 @@ func Parse(r io.Reader, h ParseHandler, parseBinlogPos bool) error {
 				return errors.Errorf("parse values %v err", line)
 			}
 
-			if err = h.Data(db, table, values); err != nil && err != ErrSkip {
+			if err = h.DataBinlog(db, table, line, values); err != nil && err != ErrSkip {
 				return errors.Trace(err)
 			}
 		}

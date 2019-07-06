@@ -27,6 +27,75 @@ func (h *dumpParseHandler) BinLog(name string, pos uint64) error {
 	return nil
 }
 
+func (h *dumpParseHandler) DataBinlog(db string, table string, binlog string, values []string) error {
+	if err := h.c.ctx.Err(); err != nil {
+		return err
+	}
+
+	tableInfo, err := h.c.GetTable(db, table)
+	if err != nil {
+		e := errors.Cause(err)
+		if e == ErrExcludedTable ||
+			e == schema.ErrTableNotExist ||
+			e == schema.ErrMissingTableMeta {
+			return nil
+		}
+		log.Errorf("get %s.%s information err: %v", db, table, err)
+		return errors.Trace(err)
+	}
+
+	vs := make([]interface{}, len(values))
+
+	for i, v := range values {
+		if v == "NULL" {
+			vs[i] = nil
+		} else if v == "_binary ''" {
+			vs[i] = []byte{}
+		} else if v[0] != '\'' {
+			if tableInfo.Columns[i].Type == schema.TYPE_NUMBER {
+				n, err := strconv.ParseInt(v, 10, 64)
+				if err != nil {
+					return fmt.Errorf("parse row %v at %d error %v, int expected", values, i, err)
+				}
+				vs[i] = n
+			} else if tableInfo.Columns[i].Type == schema.TYPE_FLOAT {
+				f, err := strconv.ParseFloat(v, 64)
+				if err != nil {
+					return fmt.Errorf("parse row %v at %d error %v, float expected", values, i, err)
+				}
+				vs[i] = f
+			} else if tableInfo.Columns[i].Type == schema.TYPE_DECIMAL {
+				if h.c.cfg.UseDecimal {
+					d, err := decimal.NewFromString(v)
+					if err != nil {
+						return fmt.Errorf("parse row %v at %d error %v, decimal expected", values, i, err)
+					}
+					vs[i] = d
+				} else {
+					f, err := strconv.ParseFloat(v, 64)
+					if err != nil {
+						return fmt.Errorf("parse row %v at %d error %v, float expected", values, i, err)
+					}
+					vs[i] = f
+				}
+			} else if strings.HasPrefix(v, "0x") {
+				buf, err := hex.DecodeString(v[2:])
+				if err != nil {
+					return fmt.Errorf("parse row %v at %d error %v, hex literal expected", values, i, err)
+				}
+				vs[i] = string(buf)
+			} else {
+				return fmt.Errorf("parse row %v error, invalid type at %d", values, i)
+			}
+		} else {
+			vs[i] = v[1 : len(v)-1]
+		}
+	}
+
+	events := newRowsBinlogEvent(tableInfo, InsertAction, binlog, [][]interface{}{vs}, nil)
+	return h.c.eventHandler.OnRow(events)
+}
+
 func (h *dumpParseHandler) Data(db string, table string, values []string) error {
 	if err := h.c.ctx.Err(); err != nil {
 		return err
