@@ -368,6 +368,24 @@ func (ta *Table) fetchPrimaryKeyColumns() error {
 	return nil
 }
 
+func (ta *Table) GetPKPairs(row []interface{}) (map[string]interface{}, error) {
+	indexes := ta.PKColumns
+	if len(indexes) == 0 {
+		return nil, errors.Errorf("table %s has no PK", ta)
+	} else if len(ta.Columns) != len(row) {
+		return nil, errors.Errorf("table %s has %d columns, but row data %v len is %d", ta,
+			len(ta.Columns), row, len(row))
+	}
+
+	values := make(map[string]interface{}, len(indexes))
+
+	for _, index := range indexes {
+		values[ta.Columns[index].Name] = row[index]
+	}
+
+	return values, nil
+}
+
 // GetPKValues gets primary keys in one row for a table, a table may use multi fields as the PK
 func (ta *Table) GetPKValues(row []interface{}) ([]interface{}, error) {
 	indexes := ta.PKColumns
